@@ -58,9 +58,11 @@ class YandexGPT:
             return self._fallback_response(question)
 
     def _parse_response(self, text: str, original_question: str) -> dict:
+        text = re.sub(r',\s*}', '}', text) 
+        text = re.sub(r',\s*]', ']', text) 
         json_match = re.search(r'\{.*\}', text, re.DOTALL) #ищем json
-        if json_match:
-            try:
+        if json_match:            
+            try:                
                 result = json.loads(json_match.group())
                 if 'sql' not in result:
                     result['sql'] = None
