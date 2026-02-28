@@ -1,0 +1,11 @@
+#db
+asyncpg==0.29.0
+
+#HTTP
+aiohttp==3.9.3
+
+#tg
+aiogram==3.4.1
+
+#utils
+python-dotenv==1.0.0

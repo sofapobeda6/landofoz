@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: video-stats-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-video_stats}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bot_network
+
+  bot:
+    build: .
+    container_name: video-stats-bot
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      #db
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-video_stats}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      #yandex
+      YC_FOLDER_ID: ${YC_FOLDER_ID}
+      YC_API_KEY: ${YC_API_KEY}
+      #tg
+      BOT_TOKEN: ${BOT_TOKEN}
+      #logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./app:/app/app 
+      - ./load_data.py:/app/load_data.py
+    networks:
+      - bot_network
+
+volumes:
+  postgres_data:
+    name: video-stats-postgres-data
+
+networks:
+  bot_network:
+    name: video-stats-network
+    driver: bridge
